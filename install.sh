@@ -121,8 +121,12 @@ dialog --infobox "Configurant servidor web i unzipper" 5 50
 # Descarreguem i instal·lem unzipper
 cd /var/www/html
 rm index.html > /dev/null 2> /dev/null;
-wget https://raw.githubusercontent.com/smx-m14/aws/main/landing/index.html > /dev/null 2> /dev/null;
-wget https://raw.githubusercontent.com/smx-m14/aws/main/unzipper/unzipper.php > /dev/null 2> /dev/null;
+wget https://raw.githubusercontent.com/smx-m14/lamp/main/index.html > /dev/null 2> /dev/null;
+wget https://raw.githubusercontent.com/smx-m14/lamp/main/unzipper.php > /dev/null 2> /dev/null;
+
+wget https://raw.githubusercontent.com/smx-m14/lamp/main/webserver > /dev/null 2> /dev/null;
+mv webserver /usr/local/bin/webserver > /dev/null 2> /dev/null;
+chmod +x /usr/local/bin/webserver > /dev/null 2> /dev/null;;
 
 # Instal·lem i configurem FTP
 dialog --infobox "Configurant FTP" 5 50
@@ -151,7 +155,7 @@ sudo systemctl disable proftpd > /dev/null 2> /dev/null;
 sudo systemctl disable apache2 > /dev/null 2> /dev/null;
 sudo systemctl disable mariadb > /dev/null 2> /dev/null;
 
-dialog --title "Configuració finalitzada" --msgbox "El vostre servidor web ha estat correctament configurat." 8 50
+dialog --title "Configuració finalitzada" --msgbox "El vostre servidor web ha estat correctament configurat. Espereu uns minuts per accedir-hi per primera vegada" 8 50
 
 # Netegem pantalla
 clear;
