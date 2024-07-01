@@ -151,7 +151,7 @@ sudo systemctl disable proftpd > /dev/null 2> /dev/null;
 sudo systemctl disable apache2 > /dev/null 2> /dev/null;
 sudo systemctl disable mariadb > /dev/null 2> /dev/null;
 
-dialog --title "Configuració finalitzada" --msgbox "El vostre servidor web ha estat correctament configurat. Espereu uns minuts per accedir-hi per primera vegada" 8 50
+dialog --title "Configuració finalitzada" --msgbox "El vostre servidor web ha estat correctament configurat." 8 50
 
 # Netegem pantalla
 clear;
