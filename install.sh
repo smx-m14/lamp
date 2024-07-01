@@ -126,7 +126,7 @@ wget https://raw.githubusercontent.com/smx-m14/lamp/main/unzipper.php > /dev/nul
 
 wget https://raw.githubusercontent.com/smx-m14/lamp/main/webserver > /dev/null 2> /dev/null;
 mv webserver /usr/local/bin/webserver > /dev/null 2> /dev/null;
-chmod +x /usr/local/bin/webserver > /dev/null 2> /dev/null;;
+chmod +x /usr/local/bin/webserver > /dev/null 2> /dev/null;
 
 # Instal·lem i configurem FTP
 dialog --infobox "Configurant FTP" 5 50
