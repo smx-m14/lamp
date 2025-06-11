@@ -17,21 +17,25 @@ package_installed() {
 # Verificaciones previas
 if package_installed apache2; then
     echo "El paquet Apache2 està instal·lat en aquest sistema. Instal·lació cancel·lada."
+    echo "El podeu desinstal·lar amb apt purge apache2."
     exit 1
 fi
 
 if package_installed proftpd-core; then
     echo "El paquet ProFTP està instal·lat en aquest sistema. Instal·lació cancel·lada."
+    echo "El podeu desinstal·lar amb apt purge proftpd-core."
     exit 1
 fi
 
 if package_installed mariadb-server; then
     echo "El paquet MariaDB està instal·lat en aquest sistema. Instal·lació cancel·lada."
+    echo "El podeu desinstal·lar amb apt purge mariadb-server."
     exit 1
 fi
 
 if package_installed mysql-server; then
     echo "El paquet MySQL està instal·lat en aquest sistema. Instal·lació cancel·lada."
+    echo "El podeu desinstal·lar amb apt purge mysql-server."
     exit 1
 fi
 
@@ -67,8 +71,6 @@ do
 done
 
 # Instal·lem tota la resta de paquets pel servidor
-#apt install -y apache2 mysql-server libapache2-mod-php8.1 php8.1-intl php8.1-gmp php8.1-bcmath php-imagick  php8.1-sqlite3 dbconfig-common dbconfig-mysql default-mysql-client icc-profiles-free  javascript-common libjs-bootstrap4 libjs-codemirror libjs-jquery libjs-jquery-mousewheel libjs-jquery-timepicker libjs-jquery-ui libjs-popper.js libjs-sizzle libjs-sphinxdoc libjs-underscore libonig5 libzip4 mysql-client-8.0 mysql-client-core-8.0 mysql-common node-jquery php-bz2 php-cli php-common php-curl php-gd php-google-recaptcha php-json   php-mariadb-mysql-kbs php-mbstring php-mysql php-nikic-fast-route   php-phpmyadmin-motranslator php-phpmyadmin-shapefile php-phpmyadmin-sql-parser php-phpseclib php-psr-cache php-psr-container php-psr-log php-symfony-cache php-symfony-cache-contracts php-symfony-config php-symfony-dependency-injection php-symfony-deprecation-contracts php-symfony-expression-language php-symfony-filesystem php-symfony-polyfill-php80 php-symfony-polyfill-php81   php-symfony-service-contracts php-symfony-var-exporter php-tcpdf php-twig   php-twig-i18n-extension php-xml php-zip php8.1-bz2 php8.1-cli php8.1-common php8.1-curl php8.1-gd php8.1-mbstring php8.1-mysql php8.1-opcache php8.1-readline php8.1-xml php8.1-zip > /dev/null 2> /dev/null;
-
 dialog --infobox "Instal·lant els paquets necessaris" 5 50
 
 apt install -y sed apache2 mariadb-server php-mysql libapache2-mod-php php-cli php-mbstring php-intl php-soap php-sqlite3 php-imagick php-curl > /dev/null 2> /dev/null;
