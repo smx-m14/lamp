@@ -25,6 +25,10 @@ stop_services() {
 # Funció per reiniciar els serveis
 restart_services() {
     echo "Reiniciant serveis..."
+
+    systemctl daemon-reexec
+    systemctl daemon-reload
+
     systemctl restart apache2
     systemctl restart mariadb
     systemctl restart proftpd
