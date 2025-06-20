@@ -84,7 +84,7 @@ phpenmod soap > /dev/null 2> /dev/null;
 dialog --infobox "Configurant SSL" 5 50
 # Instalar OpenSSL
 sudo apt install -y openssl > /dev/null 2> /dev/null;
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt -subj "/C=US/ST=State/L=City/O=Organization/OU=IT Department/CN=localhost" > /dev/null 2> /dev/null;
+sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt -subj "/C=US/ST=State/L=City/O=Organization/OU=IT Department/CN=localhost" > /dev/null 2> /dev/null;
 a2enmod ssl > /dev/null 2> /dev/null;
 a2ensite default-ssl > /dev/null 2> /dev/null;
 
