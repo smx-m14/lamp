@@ -41,7 +41,7 @@ fi
 
 # Comprovacions prèvies i paquets mínims
 apt update > /dev/null 2> /dev/null;
-apt install dialog unzip -y > /dev/null 2> /dev/null;
+apt install dialog unzip gcc make -y > /dev/null 2> /dev/null;
 
 # Variables globals
 userPass="";
