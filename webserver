@@ -1,47 +1,79 @@
 #!/bin/bash
 
-# Verificar si el usuario es superusuario (root)
+# Verificar si l'usuari és root
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root." 
+   echo "Aquest script s'ha d'executar com a root." 
    exit 1
 fi
 
-# Función para iniciar los servicios
+# Funció per iniciar els serveis
 start_services() {
-    echo "Starting services..."
+    echo "Iniciant serveis..."
     systemctl start apache2
     systemctl start mariadb
     systemctl start proftpd
 }
 
-# Función para detener los servicios
+# Funció per aturar els serveis
 stop_services() {
-    echo "Stopping services..."
+    echo "Aturant serveis..."
     systemctl stop apache2
     systemctl stop mariadb
     systemctl stop proftpd
 }
 
-# Función para reiniciar los servicios
+# Funció per reiniciar els serveis
 restart_services() {
-    echo "Restarting services..."
+    echo "Reiniciant serveis..."
     systemctl restart apache2
     systemctl restart mariadb
     systemctl restart proftpd
 }
 
-# Función para verificar el estado de los servicios
+# Funció per mostrar l'estat dels serveis
 status_services() {
-    echo "Services Status:"
+    echo "Estat dels serveis:"
     echo -n "Apache: "
-    systemctl is-active --quiet apache2 && echo "Running" || echo "Not running"
+    systemctl is-active --quiet apache2 && echo "En marxa" || echo "Aturat"
     echo -n "MariaDB: "
-    systemctl is-active --quiet mariadb && echo "Running" || echo "Not running"
+    systemctl is-active --quiet mariadb && echo "En marxa" || echo "Aturat"
     echo -n "ProFTPD: "
-    systemctl is-active --quiet proftpd && echo "Running" || echo "Not running"
+    systemctl is-active --quiet proftpd && echo "En marxa" || echo "Aturat"
 }
 
-# Validar los argumentos de entrada
+# Funció per desinstal·lar els serveis
+uninstall_services() {
+    echo "AVÍS: Aquesta acció eliminarà els serveis web, la configuració i el contingut de /var/www/html."
+    echo "Aquesta acció NO es pot desfer."
+
+    read -p "Esteu segurs que voleu continuar? (sí/no): " resposta
+
+    if [[ "$resposta" != "sí" ]]; then
+        echo "Operació cancel·lada."
+        exit 0
+    fi
+
+    echo "Desinstal·lant serveis i netejant el sistema..."
+
+    # Atura serveis
+    systemctl stop apache2 mariadb proftpd
+
+    # Desinstal·la paquets
+    apt purge -y apache2 mariadb-server proftpd-core phpmyadmin php libapache2-mod-php > /dev/null
+    apt autoremove -y > /dev/null
+    apt autoclean -y > /dev/null
+
+    # Elimina fitxers residuals
+    rm -rf /etc/apache2 /etc/mysql /etc/proftpd /etc/php* /etc/phpmyadmin /var/www/html/* /usr/local/bin/webserver
+
+    # Restaura l’usuari www-data
+    usermod -d /var/www www-data
+    usermod -s /usr/sbin/nologin www-data
+
+    echo "Sistema restaurat. Serveis eliminats."
+}
+
+# Validació dels paràmetres
 case "$1" in
     start)
         start_services
@@ -55,11 +87,13 @@ case "$1" in
     status)
         status_services
         ;;
+    uninstall)
+        uninstall_services
+        ;;
     *)
-        echo "Usage: webserver {start|stop|restart|status}"
+        echo "Ús: webserver {start|stop|restart|status|uninstall}"
         exit 1
         ;;
 esac
 
 exit 0
- 
