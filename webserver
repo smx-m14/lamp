@@ -24,14 +24,15 @@ stop_services() {
 
 # Funció per reiniciar els serveis
 restart_services() {
-    echo "Reiniciant serveis..."
+    echo "Aturant serveis..."
+    systemctl stop apache2
+    systemctl stop mariadb
+    systemctl stop proftpd
 
-    systemctl daemon-reexec
-    systemctl daemon-reload
-
-    systemctl restart apache2
-    systemctl restart mariadb
-    systemctl restart proftpd
+    echo "Iniciant serveis..."
+    systemctl start apache2
+    systemctl start mariadb
+    systemctl start proftpd
 }
 
 # Funció per mostrar l'estat dels serveis
