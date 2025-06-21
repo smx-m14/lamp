@@ -45,40 +45,6 @@ status_services() {
     systemctl is-active --quiet proftpd && echo "En marxa" || echo "Aturat"
 }
 
-# Funció per desinstal·lar els serveis
-uninstall_services() {
-    echo "AVÍS: Aquesta acció eliminarà els serveis web, la configuració i el contingut de /var/www/html."
-    echo "Aquesta acció NO es pot desfer."
-
-    read -p "Esteu segurs que voleu continuar? (sí/no): " resposta
-
-    if [[ "$resposta" != "sí" ]]; then
-        echo "Operació cancel·lada."
-        exit 0
-    fi
-
-    echo "Desinstal·lant serveis i netejant el sistema..."
-
-    systemctl daemon-reexec
-    systemctl daemon-reload
-
-    # Atura serveis
-    systemctl stop apache2 mariadb proftpd
-
-    # Desinstal·la paquets
-    apt-get purge -y apache2 mariadb-server proftpd-core phpmyadmin php libapache2-mod-php > /dev/null
-    apt-get autoremove -y > /dev/null
-    apt-get autoclean -y > /dev/null
-
-    # Elimina fitxers residuals
-    rm -rf /etc/apache2 /etc/mysql /etc/proftpd /etc/php* /etc/phpmyadmin /var/www/html/* /usr/local/bin/webserver
-
-    # Restaura l’usuari www-data
-    usermod -d /var/www www-data
-    usermod -s /usr/sbin/nologin www-data
-
-    echo "Sistema restaurat. Serveis eliminats."
-}
 
 # Validació dels paràmetres
 case "$1" in
@@ -93,9 +59,6 @@ case "$1" in
         ;;
     status)
         status_services
-        ;;
-    uninstall)
-        uninstall_services
         ;;
     *)
         echo "Ús: webserver {start|stop|restart|status|uninstall}"
