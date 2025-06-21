@@ -145,6 +145,13 @@ sudo sed -i 's/;max_input_vars = 1000/max_input_vars = 10000/' /etc/php/*/apache
 # Només a AWS
 sed -i 's/# PassivePorts 49152 65534/PassivePorts 30000 30100/' /etc/proftpd/proftpd.conf;
 
+# Redirecció de tot el trànsit HTTP a HTTPS
+echo "<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+    Redirect / https://localhost/
+</VirtualHost>" > /etc/apache2/sites-available/000-default.conf
+
 # Habilitem i arrenquem tots els serveis (només a AWS)
 sudo systemctl enable proftpd > /dev/null 2> /dev/null;
 sudo systemctl enable apache2 > /dev/null 2> /dev/null;
