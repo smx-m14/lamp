@@ -62,7 +62,7 @@ case "$1" in
         status_services
         ;;
     *)
-        echo "Ús: webserver {start|stop|restart|status|uninstall}"
+        echo "Ús: webserver {start|stop|restart|status}"
         exit 1
         ;;
 esac
