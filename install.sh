@@ -141,7 +141,13 @@ echo -e "<Directory /var/www/html>\n	Umask 022 022\n 	AllowOverwrite on\n	<Limit
 
 #configuració php??
 dialog --infobox "Configurant php" 5 50
-sudo sed -i 's/;max_input_vars = 1000/max_input_vars = 10000/' /etc/php/*/apache2/php.ini
+for ini in /etc/php/*/apache2/php.ini; do
+    sed -i 's/^;*max_input_vars *=.*/max_input_vars = 10000/' "$ini"
+    sed -i 's/^;*upload_max_filesize *=.*/upload_max_filesize = 1G/' "$ini"
+    sed -i 's/^;*post_max_size *=.*/post_max_size = 1G/' "$ini"
+    sed -i 's/^;*memory_limit *=.*/memory_limit = 1G/' "$ini"
+    sed -i 's/^;*max_execution_time *=.*/max_execution_time = 600/' "$ini"
+done
 # Només a AWS
 #sed -i 's/# PassivePorts 49152 65534/PassivePorts 30000 30100/' /etc/proftpd/proftpd.conf;
 
