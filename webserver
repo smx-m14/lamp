@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Verificar si l'usuari és root
+if [[ $EUID -ne 0 ]]; then
+   echo "Aquest script s'ha d'executar com a root." 
+   exit 1
+fi
+
+# Funció per iniciar els serveis
+start_services() {
+    echo "Iniciant serveis..."
+    systemctl start apache2
+    systemctl start mariadb
+    systemctl start proftpd
+}
+
+# Funció per aturar els serveis
+stop_services() {
+    echo "Aturant serveis..."
+    systemctl stop apache2
+    systemctl stop mariadb
+    systemctl stop proftpd
+}
+
+# Funció per reiniciar els serveis
+restart_services() {
+    echo "Aturant serveis..."
+    systemctl stop apache2
+    systemctl stop mariadb
+    systemctl stop proftpd
+
+    echo "Iniciant serveis..."
+    systemctl start apache2
+    systemctl start mariadb
+    systemctl start proftpd
+}
+
+# Funció per mostrar l'estat dels serveis
+status_services() {
+    echo "Estat dels serveis:"
+    echo -n "Apache: "
+    systemctl is-active --quiet apache2 && echo "En marxa" || echo "Aturat"
+    echo -n "MariaDB: "
+    systemctl is-active --quiet mariadb && echo "En marxa" || echo "Aturat"
+    echo -n "ProFTPD: "
+    systemctl is-active --quiet proftpd && echo "En marxa" || echo "Aturat"
+}
+
+
+# Validació dels paràmetres
+case "$1" in
+    start)
+        start_services
+        ;;
+    stop)
+        stop_services
+        ;;
+    restart)
+        restart_services
+        ;;
+    status)
+        status_services
+        ;;
+    *)
+        echo "Ús: webserver {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+
+exit 0
