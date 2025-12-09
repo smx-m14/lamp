@@ -15,8 +15,11 @@ for file in "$APACHE_DIR"/*.conf; do
     fi
 done
 
+
+
 # Reiniciar Apache
 echo "Reiniciant Apache..."
+sudo a2enmod rewrite
 sudo systemctl restart apache2
 
 echo "Tots els fitxers revisats i Apache reiniciat."
