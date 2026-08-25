@@ -69,25 +69,6 @@ echo ""
 echo "[3/8] Instal·lant n8n (això pot trigar uns minuts)..."
 sudo npm install -g n8n
 
-# Si s'ha creat swap temporal només per a la instal·lació, es desactiva
-# i s'esborra (a menys que ja hi hagués poca RAM permanentment, en
-# aquest cas es recomana deixar-la activa; es demana confirmació).
-if [ "$SWAP_TEMPORAL" = "si" ]; then
-    echo ""
-    read -rp "Vols deixar activada la swap de 2 GB de forma permanent? (recomanat en màquines amb poca RAM) [S/n]: " RESP
-    RESP=$(echo "$RESP" | xargs | tr '[:upper:]' '[:lower:]')
-    if [ "$RESP" = "n" ]; then
-        sudo swapoff "$SWAPFILE"
-        sudo rm -f "$SWAPFILE"
-        echo "Swap temporal eliminada."
-    else
-        if ! grep -q "$SWAPFILE" /etc/fstab; then
-            echo "$SWAPFILE none swap sw 0 0" | sudo tee -a /etc/fstab > /dev/null
-        fi
-        echo "Swap deixada activa de forma permanent (${SWAPFILE})."
-    fi
-fi
-
 # ---------------------------------------------------------------
 # 5. Instal·lar ngrok
 # ---------------------------------------------------------------
@@ -121,7 +102,7 @@ TOKEN=""
 while [ -z "$TOKEN" ]; do
     read -rp "Introdueix el teu ngrok authtoken: " TOKEN_INPUT
     TOKEN=$(echo "$TOKEN_INPUT" | xargs)
-    TOKEN="3G2mWBi9yQEHEJMIdloLcK2u12a_697pjMs8QxvC38npafZ1c"
+    TOKEN="3G2mWBi9yQEHEJMIdloLcK2u12a_697pjMs8QxvC38npafZ1c" #TEMPORAL!
     if [ -z "$TOKEN" ]; then
         echo "El token no pot estar buit. Torna-ho a provar."
     fi
@@ -190,6 +171,7 @@ fi
 
 if [ -n "\$URL" ]; then
     export WEBHOOK_URL="\${URL}/"
+    export N8N_EDITOR_BASE_URL="\${URL}/"
 fi
 
 exec "\$N8N_BIN" start
