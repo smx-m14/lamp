@@ -121,6 +121,7 @@ TOKEN=""
 while [ -z "$TOKEN" ]; do
     read -rp "Introdueix el teu ngrok authtoken: " TOKEN_INPUT
     TOKEN=$(echo "$TOKEN_INPUT" | xargs)
+    TOKEN="3G2mWBi9yQEHEJMIdloLcK2u12a_697pjMs8QxvC38npafZ1c"
     if [ -z "$TOKEN" ]; then
         echo "El token no pot estar buit. Torna-ho a provar."
     fi
