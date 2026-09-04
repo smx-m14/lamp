@@ -12,6 +12,67 @@
  */
 define('VERSION', '0.1.1');
 
+// ---------------------------------------------------------------------------
+// SECURITY: Password protection.
+// Change the password by editing PLAIN password below and regenerating the
+// hash, or simply replace UNZIPPER_PASSWORD_HASH with a new hash generated
+// with: php -r "echo password_hash('yourpassword', PASSWORD_DEFAULT);"
+// ---------------------------------------------------------------------------
+define('UNZIPPER_PASSWORD_HASH', '$2b$10$s4LhsX0akRP7gkUvtn535ew.g9bjId2AhfHa0TqjRtQbxr9DN9uvq');
+
+session_start();
+
+// Handle login.
+if (isset($_POST['unzipper_login'])) {
+  $inputPassword = isset($_POST['password']) ? $_POST['password'] : '';
+  if (password_verify($inputPassword, UNZIPPER_PASSWORD_HASH)) {
+    // Regenerate session ID on successful login to prevent session fixation.
+    session_regenerate_id(true);
+    $_SESSION['unzipper_auth'] = true;
+  }
+  else {
+    $loginError = 'Contraseña incorrecta.';
+  }
+}
+
+// Handle logout.
+if (isset($_GET['logout'])) {
+  $_SESSION = array();
+  session_destroy();
+  header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?'));
+  exit;
+}
+
+// Block everything below this point until authenticated.
+if (empty($_SESSION['unzipper_auth'])) {
+  ?>
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>File Unzipper + Zipper - Login</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 320px; margin: 80px auto; }
+      .form-field { border: 1px solid #AAA; padding: 8px; width: 100%; box-sizing: border-box; margin-top: 10px; }
+      .submit { background-color: #378de5; border: 0; color: #fff; font-size: 15px; padding: 10px 24px; margin-top: 15px; cursor: pointer; }
+      .submit:hover { background-color: #2c6db2; }
+      .error { color: #c00; font-size: 90%; }
+    </style>
+  </head>
+  <body>
+    <h1>Acceso protegido</h1>
+    <?php if (!empty($loginError)) { echo '<p class="error">' . htmlspecialchars($loginError) . '</p>'; } ?>
+    <form action="" method="POST">
+      <label for="password">Contraseña:</label>
+      <input type="password" name="password" class="form-field" autofocus />
+      <input type="submit" name="unzipper_login" class="submit" value="Entrar" />
+    </form>
+  </body>
+  </html>
+  <?php
+  exit;
+}
+
 $timestart = microtime(TRUE);
 $GLOBALS['status'] = array();
 
@@ -32,6 +93,64 @@ if (isset($_POST['dozip'])) {
 
 $timeend = microtime(TRUE);
 $time = round($timeend - $timestart, 4);
+
+/**
+ * SECURITY: Resolve a user-supplied relative path against a base directory
+ * and make sure the result stays inside that base directory (prevents
+ * path/directory traversal via "../", absolute paths, symlinks, etc.).
+ *
+ * @param string $baseDir
+ *   The directory that must contain the result (e.g. the script's own dir).
+ * @param string $relativePath
+ *   The user-supplied relative path. May be empty.
+ * @param bool $mustExist
+ *   If TRUE, the resolved path must already exist (used for files/paths that
+ *   are read, e.g. the folder to be zipped). If FALSE, the target itself is
+ *   allowed not to exist yet (used for extraction destinations, which may
+ *   still need to be created) as long as its parent exists and is inside
+ *   the base directory.
+ *
+ * @return string|false
+ *   The safe, resolved absolute path, or FALSE if the path is invalid or
+ *   escapes the base directory.
+ */
+function unzipper_safe_path($baseDir, $relativePath, $mustExist = TRUE) {
+  $baseReal = realpath($baseDir);
+  if ($baseReal === FALSE) {
+    return FALSE;
+  }
+
+  // Strip null bytes and reject absolute paths outright.
+  $relativePath = str_replace("\0", '', $relativePath);
+  if ($relativePath !== '' && ($relativePath[0] === '/' || $relativePath[0] === '\\' || preg_match('#^[a-zA-Z]:[\\\\/]#', $relativePath))) {
+    return FALSE;
+  }
+
+  $candidate = $relativePath === '' ? $baseReal : $baseReal . DIRECTORY_SEPARATOR . $relativePath;
+
+  if ($mustExist) {
+    $real = realpath($candidate);
+    if ($real === FALSE) {
+      return FALSE;
+    }
+  }
+  else {
+    // Target may not exist yet; resolve its parent instead and re-attach
+    // the final path segment.
+    $parent = realpath(dirname($candidate));
+    if ($parent === FALSE) {
+      return FALSE;
+    }
+    $real = $parent . DIRECTORY_SEPARATOR . basename($candidate);
+  }
+
+  // Ensure the resolved path is the base dir itself or genuinely inside it.
+  if ($real !== $baseReal && strpos($real . DIRECTORY_SEPARATOR, $baseReal . DIRECTORY_SEPARATOR) !== 0) {
+    return FALSE;
+  }
+
+  return $real;
+}
 
 /**
  * Class Unzipper
@@ -71,20 +190,31 @@ class Unzipper {
    *   The relative destination path where to extract files.
    */
   public function prepareExtraction($archive, $destination = '') {
-    // Determine paths.
-    if (empty($destination)) {
-      $extpath = $this->localdir;
+    // SECURITY: Validate the destination stays inside localdir before doing
+    // anything with it (including mkdir).
+    $safeDestination = unzipper_safe_path($this->localdir, $destination, FALSE);
+    if ($safeDestination === FALSE) {
+      $GLOBALS['status'] = array('error' => 'Error: Ruta de destino no válida o fuera del directorio permitido.');
+      return;
+    }
+
+    if (!is_dir($safeDestination)) {
+      mkdir($safeDestination, 0755, TRUE);
+    }
+
+    // Only local existing archives are allowed to be extracted.
+    if (in_array($archive, $this->zipfiles, TRUE)) {
+      // Re-validate the archive path itself (defense in depth), even though
+      // it comes from the whitelist built by scanning localdir.
+      $safeArchive = unzipper_safe_path($this->localdir, $archive, TRUE);
+      if ($safeArchive === FALSE) {
+        $GLOBALS['status'] = array('error' => 'Error: Archivo de origen no válido.');
+        return;
+      }
+      self::extract($safeArchive, $safeDestination);
     }
     else {
-      $extpath = $this->localdir . '/' . $destination;
-      // Todo: move this to extraction function.
-      if (!is_dir($extpath)) {
-        mkdir($extpath);
-      }
-    }
-    // Only local existing archives are allowed to be extracted.
-    if (in_array($archive, $this->zipfiles)) {
-      self::extract($archive, $extpath);
+      $GLOBALS['status'] = array('error' => 'Error: Archivo no permitido.');
     }
   }
 
@@ -131,6 +261,33 @@ class Unzipper {
     if ($zip->open($archive) === TRUE) {
       // Check if destination is writable
       if (is_writeable($destination . '/')) {
+        // SECURITY: Guard against Zip Slip by checking every entry name
+        // resolves inside $destination before extracting. Modern PHP
+        // (>= 8.0) already sanitizes this internally, but we double-check
+        // for older/hosted PHP versions.
+        $safe = TRUE;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+          $entryName = $zip->getNameIndex($i);
+          if ($entryName === FALSE) {
+            continue;
+          }
+          $entryTarget = realpath(dirname($destination . '/' . $entryName));
+          $destReal = realpath($destination);
+          if ($entryTarget === FALSE || $destReal === FALSE || strpos($entryTarget . DIRECTORY_SEPARATOR, $destReal . DIRECTORY_SEPARATOR) !== 0) {
+            // Entry would land outside the destination folder.
+            if (strpos($entryName, '..') !== FALSE || $entryName[0] === '/') {
+              $safe = FALSE;
+              break;
+            }
+          }
+        }
+
+        if (!$safe) {
+          $zip->close();
+          $GLOBALS['status'] = array('error' => 'Error: El archivo .zip contiene rutas no seguras (posible Zip Slip) y no se ha extraído.');
+          return;
+        }
+
         $zip->extractTo($destination);
         $zip->close();
         $GLOBALS['status'] = array('success' => 'Files unzipped successfully');
@@ -209,6 +366,12 @@ class Unzipper {
       if (is_writeable($destination . '/')) {
         $entries = $rar->getEntries();
         foreach ($entries as $entry) {
+          // SECURITY: Skip entries whose name tries to escape the
+          // destination folder (Zip Slip equivalent for .rar).
+          $entryName = $entry->getName();
+          if (strpos($entryName, '..') !== FALSE || (isset($entryName[0]) && $entryName[0] === '/')) {
+            continue;
+          }
           $entry->extract($destination);
         }
         $rar->close();
@@ -280,18 +443,27 @@ class Zipper {
    *   Relative path of the resulting output zip file.
    */
   public static function zipDir($sourcePath, $outZipPath) {
-    $pathInfo = pathinfo($sourcePath);
+    // SECURITY: Validate sourcePath stays inside the current directory
+    // before reading from it, to prevent zipping/exfiltrating arbitrary
+    // files elsewhere on the server (e.g. "../../etc").
+    $safeSource = unzipper_safe_path('.', $sourcePath, TRUE);
+    if ($safeSource === FALSE || !is_dir($safeSource)) {
+      $GLOBALS['status'] = array('error' => 'Error: Ruta a comprimir no válida o fuera del directorio permitido.');
+      return;
+    }
+
+    $pathInfo = pathinfo($safeSource);
     $parentPath = $pathInfo['dirname'];
     $dirName = $pathInfo['basename'];
 
     $z = new ZipArchive();
     $z->open($outZipPath, ZipArchive::CREATE);
     $z->addEmptyDir($dirName);
-    if ($sourcePath == $dirName) {
-      self::folderToZip($sourcePath, $z, 0);
+    if ($safeSource == $dirName) {
+      self::folderToZip($safeSource, $z, 0);
     }
     else {
-      self::folderToZip($sourcePath, $z, strlen("$parentPath/"));
+      self::folderToZip($safeSource, $z, strlen("$parentPath/"));
     }
     $z->close();
 
@@ -385,10 +557,16 @@ class Zipper {
       background-color: #2c6db2;
       cursor: pointer;
     }
+
+    .logout {
+      float: right;
+      font-size: 80%;
+    }
     -->
   </style>
 </head>
 <body>
+<p class="logout"><a href="?logout=1">Cerrar sesión</a></p>
 <p class="status status--<?php echo strtoupper(key($GLOBALS['status'])); ?>">
   Status: <?php echo reset($GLOBALS['status']); ?><br/>
   <span class="small">Processing Time: <?php echo $time; ?> seconds</span>
