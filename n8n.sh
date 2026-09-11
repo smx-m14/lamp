@@ -2,7 +2,6 @@
 # =====================================================================
 #  instalar-n8n.sh
 #  Instal·lador únic de n8n + ngrok per a Lubuntu 24.04
-#  IOC / SMX - Cicle Formatiu
 #
 #  Aquest fitxer, ell sol, instal·la tot el necessari (Node.js, n8n,
 #  ngrok), demana el token de ngrok, i genera dins de
