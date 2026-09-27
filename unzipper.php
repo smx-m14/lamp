@@ -31,7 +31,7 @@ if (isset($_POST['unzipper_login'])) {
     $_SESSION['unzipper_auth'] = true;
   }
   else {
-    $loginError = 'Contraseña incorrecta.';
+    $loginError = 'Incorrect password.';
   }
 }
 
@@ -60,12 +60,12 @@ if (empty($_SESSION['unzipper_auth'])) {
     </style>
   </head>
   <body>
-    <h1>Acceso protegido</h1>
+    <h1>Protected Access</h1>
     <?php if (!empty($loginError)) { echo '<p class="error">' . htmlspecialchars($loginError) . '</p>'; } ?>
     <form action="" method="POST">
-      <label for="password">Contraseña:</label>
+      <label for="password">Password:</label>
       <input type="password" name="password" class="form-field" autofocus />
-      <input type="submit" name="unzipper_login" class="submit" value="Entrar" />
+      <input type="submit" name="unzipper_login" class="submit" value="Log In" />
     </form>
   </body>
   </html>
@@ -173,10 +173,10 @@ class Unzipper {
       closedir($dh);
 
       if (!empty($this->zipfiles)) {
-        $GLOBALS['status'] = array('info' => '.zip or .gz or .rar files found, ready for extraction');
+        $GLOBALS['status'] = array('info' => '.zip or .gz or .rar files found, ready for extraction.');
       }
       else {
-        $GLOBALS['status'] = array('info' => 'No .zip or .gz or rar files found. So only zipping functionality available.');
+        $GLOBALS['status'] = array('info' => 'No .zip or .gz or .rar files found. Only zipping functionality is available.');
       }
     }
   }
@@ -194,7 +194,7 @@ class Unzipper {
     // anything with it (including mkdir).
     $safeDestination = unzipper_safe_path($this->localdir, $destination, FALSE);
     if ($safeDestination === FALSE) {
-      $GLOBALS['status'] = array('error' => 'Error: Ruta de destino no válida o fuera del directorio permitido.');
+      $GLOBALS['status'] = array('error' => 'Error: Invalid destination path or path outside allowed directory.');
       return;
     }
 
@@ -208,13 +208,13 @@ class Unzipper {
       // it comes from the whitelist built by scanning localdir.
       $safeArchive = unzipper_safe_path($this->localdir, $archive, TRUE);
       if ($safeArchive === FALSE) {
-        $GLOBALS['status'] = array('error' => 'Error: Archivo de origen no válido.');
+        $GLOBALS['status'] = array('error' => 'Error: Invalid source file.');
         return;
       }
       self::extract($safeArchive, $safeDestination);
     }
     else {
-      $GLOBALS['status'] = array('error' => 'Error: Archivo no permitido.');
+      $GLOBALS['status'] = array('error' => 'Error: File not allowed.');
     }
   }
 
@@ -284,13 +284,13 @@ class Unzipper {
 
         if (!$safe) {
           $zip->close();
-          $GLOBALS['status'] = array('error' => 'Error: El archivo .zip contiene rutas no seguras (posible Zip Slip) y no se ha extraído.');
+          $GLOBALS['status'] = array('error' => 'Error: The .zip archive contains unsafe paths (potential Zip Slip) and was not extracted.');
           return;
         }
 
         $zip->extractTo($destination);
         $zip->close();
-        $GLOBALS['status'] = array('success' => 'Files unzipped successfully');
+        $GLOBALS['status'] = array('success' => 'Files unzipped successfully.');
       }
       else {
         $GLOBALS['status'] = array('error' => 'Error: Directory not writeable by webserver.');
@@ -448,7 +448,7 @@ class Zipper {
     // files elsewhere on the server (e.g. "../../etc").
     $safeSource = unzipper_safe_path('.', $sourcePath, TRUE);
     if ($safeSource === FALSE || !is_dir($safeSource)) {
-      $GLOBALS['status'] = array('error' => 'Error: Ruta a comprimir no válida o fuera del directorio permitido.');
+      $GLOBALS['status'] = array('error' => 'Error: Invalid path to compress or path outside allowed directory.');
       return;
     }
 
@@ -566,7 +566,7 @@ class Zipper {
   </style>
 </head>
 <body>
-<p class="logout"><a href="?logout=1">Cerrar sesión</a></p>
+<p class="logout"><a href="?logout=1">Log out</a></p>
 <p class="status status--<?php echo strtoupper(key($GLOBALS['status'])); ?>">
   Status: <?php echo reset($GLOBALS['status']); ?><br/>
   <span class="small">Processing Time: <?php echo $time; ?> seconds</span>
